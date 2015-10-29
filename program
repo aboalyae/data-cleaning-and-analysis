@@ -1,0 +1,97 @@
+#1
+#a)
+df=read.csv("~/Downloads/marriage (1).csv",head=TRUE)
+str(df)
+#b)
+library(lubridate)
+date=as.Date(df$TIME_PERIOD,format="%d-%m-%Y")
+date=ymd(date)
+df$Year=year(date)
+df$Year=factor(as.numeric(format(date,"%Y")),levels=c("2011","2012","2013","2014","2015"))
+#c)
+df$Month=month(date)
+df$Month=factor(as.numeric(format(date,"%m")),levels=c("1","2","3","4","5","6","7","8","9","10","11","12"))
+#d)
+df$Month=with(df,month.abb[Month])
+#e)
+library(plyr)
+new_frame=ddply(df,.(Month,Year),summarize,sum(MARRIAGE_LICENSES))
+#2
+#a)
+tapply(df$MARRIAGE_LICENSES,factor(df$CIVIC_CENTRE),sum)
+#b)
+par(mar = rep(2, 4))
+barplot(tapply(df$MARRIAGE_LICENSES,factor(df$CIVIC_CENTRE),sum)[order(-tapply(df$MARRIAGE_LICENSES,factor(df$CIVIC_CENTRE),sum))])
+#C) ask about why u get a NULL
+daply(df,.(Year,Month),summarize,sum(MARRIAGE_LICENSES))
+
+#d)
+t=daply(df,.(CIVIC_CENTRE,Month),summarize,sum(MARRIAGE_LICENSES))
+barplot(t,main="marriage licenses issued per month",xlab="month",col=c("darkblue","red","orange","Yellow"),legend=rownames(t))
+t
+
+#3)
+#a)
+df1= read.csv("http://opendata.toronto.ca/mls/business.licences/business.licences.csv",head=T,stringsAsFactors=F)
+str(df1)
+#b)
+sum(nchar(substr(df1$Issued,7,10))==2)
+sum(nchar(substr(df1$Issued,7,10))==4)
+#c)
+issuedate=as.Date(df1$Issued,format="%d/%m/%y")
+library(lubridate)
+issuedate=ymd(issuedate)
+
+gsub("(.*)/(..)$", "\\1/19\\2", issuedate)
+
+#d) 
+for (i in 1:length(issuedate))
+{if (year(issuedate[i])>2015)
+  year(issuedate[i])=year(issuedate[i])-100}
+#e)
+df1$Year=year(issuedate)
+df1$Month=month(issuedate)
+df1$Month=with(df1,month.abb[Month])
+
+
+#f)
+canceldate=as.Date(df1$Cancel.Date,format="%d/%m/%y")
+
+library(lubridate)
+canceldate=ymd(canceldate)
+gsub("(.*)/(..)$", "\\1/19\\2", canceldate)
+df1$Year1=year(canceldate)
+ 
+#g)
+df1$duration=as.numeric(df1$Year1)-as.numeric(df1$Year)
+
+#4 
+#a)
+summary(df1$duration)
+duration1=subset(df1,select=c("duration"),duration < 0)
+nrow(duration1)
+#b)
+duration=subset(df1,select=c("duration"),duration >= 0)
+positiveduration=sapply(duration,as.numeric)
+summary(positiveduration)
+hist(positiveduration)
+#c)
+durationless30=subset(df1,select=c("duration"),duration >= 0 & duration <30)
+durationless30=sapply(durationless30,as.numeric)
+par(mar=rep(2,4))
+hist(durationless30)
+#d)
+barplot(table(df1$Month))
+
+#e)
+count(df1$Year>=1918 & df1$Year<=1960)
+#f)
+subsetdata=subset(df1,Year >= 2011 & Year <= 2015,select=c(Month,Year))
+#g)  
+q=with(subsetdata,table(Year,Month))
+result=as.data.frame(q)
+#5)
+finalresult=join(new_frame,result,by=c("Month","Year"),type="left")
+finalresult$marriage=finalresult$..1
+plot(finalresult$marriage,finalresult$Freq,xlab="marriage",ylab="business")
+
